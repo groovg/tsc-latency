@@ -2,6 +2,10 @@
 /build
 /cmake-build-*
 
+# Generated benchmark exports
+*.csv
+*.hgrm
+
 # Editors / OS
 .vscode/
 .idea/

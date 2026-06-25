@@ -22,7 +22,7 @@ foreach(t tsc_test clock_test bench_test histogram_test)
     add_test(NAME ${t} COMMAND ${t})
 endforeach()
 
-foreach(ex measure_overhead)
+foreach(ex measure_overhead measure_function)
     add_executable(${ex} examples/${ex}.cpp)
     target_link_libraries(${ex} PRIVATE tsclat)
 endforeach()
