@@ -15,7 +15,9 @@ target_compile_features(tsclat INTERFACE cxx_std_20)
 
 enable_testing()
 
-add_executable(tsc_test test/tsc_test.cpp)
-target_link_libraries(tsc_test PRIVATE tsclat)
-target_compile_options(tsc_test PRIVATE -Wall -Wextra)
-add_test(NAME tsc_test COMMAND tsc_test)
+foreach(t tsc_test clock_test)
+    add_executable(${t} test/${t}.cpp)
+    target_link_libraries(${t} PRIVATE tsclat)
+    target_compile_options(${t} PRIVATE -Wall -Wextra)
+    add_test(NAME ${t} COMMAND ${t})
+endforeach()
