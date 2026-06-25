@@ -47,5 +47,24 @@ int main() {
         CHECK(h.mean() > 100.0);
     }
 
+    {
+        // Coordinated-omission correction: one long stall after many on-time ops.
+        // The naive recording hides it; the corrected one backfills the operations
+        // that the stall blocked, so its high percentiles reflect reality.
+        const std::uint64_t interval = 10;
+        Histogram naive;
+        Histogram corrected;
+        for (int i = 0; i < 1000; ++i) {
+            naive.record(interval);
+            corrected.record_corrected(interval, interval);
+        }
+        naive.record(10000);
+        corrected.record_corrected(10000, interval);
+
+        CHECK(naive.value_at_quantile(0.99) == interval);
+        CHECK(corrected.value_at_quantile(0.99) > 1000);
+        CHECK(corrected.count() > naive.count());
+    }
+
     RUN_END();
 }

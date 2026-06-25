@@ -25,6 +25,17 @@ public:
         }
     }
 
+    void record_corrected(std::uint64_t value, std::uint64_t expected_interval) {
+        record(value);
+        if (expected_interval == 0 || value <= expected_interval) {
+            return;
+        }
+        for (std::uint64_t missing = value - expected_interval; missing >= expected_interval;
+             missing -= expected_interval) {
+            record(missing);
+        }
+    }
+
     std::uint64_t count() const { return count_; }
     std::uint64_t max() const { return max_; }
     double mean() const { return count_ == 0 ? 0.0 : sum_ / static_cast<double>(count_); }
