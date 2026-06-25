@@ -14,3 +14,8 @@ target_include_directories(tsclat INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_compile_features(tsclat INTERFACE cxx_std_20)
 
 enable_testing()
+
+add_executable(tsc_test test/tsc_test.cpp)
+target_link_libraries(tsc_test PRIVATE tsclat)
+target_compile_options(tsc_test PRIVATE -Wall -Wextra)
+add_test(NAME tsc_test COMMAND tsc_test)
