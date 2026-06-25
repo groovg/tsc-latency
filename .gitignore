@@ -1,0 +1,10 @@
+# CMake / build
+/build
+/cmake-build-*
+
+# Editors / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
