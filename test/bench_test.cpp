@@ -16,5 +16,13 @@ int main() {
     CHECK(report.p50_ns <= report.p99_ns);
     CHECK(report.p99_ns <= report.max_ns);
 
+    double x = 1.0;
+    const tsclat::Report pinned = tsclat::bench("do_not_optimize", 100, 1000, [&] {
+        x *= 1.000001;
+        tsclat::do_not_optimize(x);
+    });
+    CHECK(pinned.samples == 1000);
+    CHECK(x > 1.0);
+
     RUN_END();
 }

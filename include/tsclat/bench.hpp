@@ -13,6 +13,29 @@
 
 namespace tsclat {
 
+#if defined(_MSC_VER) && !defined(__clang__)
+template <typename T>
+inline void do_not_optimize(const T& value) {
+    const volatile char* sink = &reinterpret_cast<const volatile char&>(value);
+    (void)sink;
+    _ReadWriteBarrier();
+}
+#else
+template <typename T>
+inline void do_not_optimize(const T& value) {
+    asm volatile("" : : "r,m"(value) : "memory");
+}
+
+template <typename T>
+inline void do_not_optimize(T& value) {
+#if defined(__clang__)
+    asm volatile("" : "+r,m"(value) : : "memory");
+#else
+    asm volatile("" : "+m,r"(value) : : "memory");
+#endif
+}
+#endif
+
 struct Overhead {
     double min_ns;
     double median_ns;

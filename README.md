@@ -12,7 +12,7 @@ correction. Means hide tails, and tails are what matter in low-latency systems.
 
 std::uint64_t counter = 0;
 auto report = tsclat::bench("increment", /*warmup=*/10'000, /*iters=*/1'000'000,
-                            [&] { ++counter; });
+                            [&] { ++counter; tsclat::do_not_optimize(counter); });
 tsclat::print_report(report);          // percentile table
 tsclat::write_csv(report, "out.csv");  // for plotting
 ```
@@ -38,11 +38,18 @@ measured timestamp overhead, and records into the histogram. Pass an
   itself; it's reported and subtracted from samples.
 - **Log-linear histogram.** Values below `2^sub_bits` are exact; each octave above
   is split into `2^sub_bits` linear sub-buckets, bounding the relative error across
-  the whole `u64` range in a few KB — enough for stable p99.9 / p99.99.
+  the whole `u64` range in ~30 KB at the default `sub_bits = 6`. Quantiles are reported
+  at the bucket's upper bound (HdrHistogram's highest-equivalent value), clamped to the
+  observed max: a coarse bucket can overstate a percentile by up to one bucket width,
+  never understate it.
+- **Optimizer barrier.** `do_not_optimize(x)` marks a value as observed, so the compiler
+  cannot hoist or delete the timed work. Any pure computation inside the lambda needs it;
+  the `measure_function` example shows the pattern.
 - **Coordinated omission.** When a run stalls, the operations the stall blocked are
   never sampled, which flatters the tail. Given an expected interval, the recorder
-  backfills those omitted samples (Gil Tene's correction), so the high percentiles
-  reflect what a client would actually have seen.
+  backfills those omitted samples (Gil Tene's correction). This is the post-hoc form; a
+  paced open-loop generator that measures from intended start times is the stronger one
+  and is not implemented here.
 
 ## Build, test, run
 
