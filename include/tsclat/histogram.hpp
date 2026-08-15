@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <bit>
 #include <cstdint>
 #include <vector>
@@ -52,7 +53,7 @@ public:
         for (std::size_t i = 0; i < counts_.size(); ++i) {
             cumulative += counts_[i];
             if (cumulative >= rank) {
-                return value_from_index(i);
+                return std::min(highest_equivalent(i), max_);
             }
         }
         return max_;
@@ -78,6 +79,14 @@ private:
         const std::uint64_t sub = static_cast<std::uint64_t>(index) & mask_;
         const int leading = static_cast<int>(octave) + sub_bits_ - 1;
         return ((std::uint64_t{1} << sub_bits_) | sub) << (leading - sub_bits_);
+    }
+
+    std::uint64_t highest_equivalent(std::size_t index) const {
+        if (index < (std::uint64_t{1} << sub_bits_)) {
+            return index;
+        }
+        const int leading = static_cast<int>(index >> sub_bits_) + sub_bits_ - 1;
+        return value_from_index(index) + ((std::uint64_t{1} << (leading - sub_bits_)) - 1);
     }
 
     int sub_bits_;

@@ -66,5 +66,17 @@ int main() {
         CHECK(corrected.count() > naive.count());
     }
 
+    {
+        // Bucketed quantiles report the bucket's upper bound, clamped to the observed
+        // max, so a coarse bucket can only overstate a value, never understate it.
+        Histogram h;
+        h.record(1005);
+        CHECK(h.value_at_quantile(0.5) == 1005);
+        CHECK(h.value_at_quantile(1.0) == 1005);
+        h.record(1000);
+        CHECK(h.value_at_quantile(0.0) >= 1000 && h.value_at_quantile(0.0) <= 1005);
+        CHECK(h.value_at_quantile(1.0) == 1005);
+    }
+
     RUN_END();
 }
