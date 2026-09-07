@@ -19,7 +19,7 @@ tsclat::write_csv(report, "out.csv");  // for plotting
 
 ```
 std::sin                  n=1000000  overhead=10.0 ns
-  p50 10  p90 20  p99 20  p99.9 20  p99.99 20  max 2635  mean 11.8  (ns)
+  p50 10  p90 20  p99 20  p99.9 20  p99.99 20  max 1443  mean 14.4  (ns)
 ```
 
 The harness times each call with `tsc_begin()` / `tsc_end()`, subtracts the
@@ -62,6 +62,28 @@ ctest --test-dir build --output-on-failure
 ./build/measure_function    # bench std::sin and dump a percentile table + CSV
 ```
 
+## What the floor looks like
+
+The numbers above come from a rented dedicated Ryzen 7 9700X (Zen 5, 8 cores on one
+CCD), Ubuntu 24.04 / kernel 6.17, gcc 13.3 `-O3`, SMT off, `isolcpus=2-7
+nohz_full=2-7 rcu_nocbs=2-7`, `performance` governor, the thread pinned to an
+isolated core. The CPU reports an invariant TSC and calibration lands at
+0.2637 ns/tick.
+
+| | isolated bare metal (9700X) | desktop (9950X3D, Windows 11, nothing pinned) |
+|---|---:|---:|
+| timestamp-pair floor, min | 10 ns | 10 ns |
+| timestamp-pair floor, median | 20 ns | 20 ns |
+| `std::sin` p50 / p99 | 10 / 20 ns | 10 / 20 ns |
+| `std::sin` max | 1,443 to 1,703 ns over two runs | 2,635 to 52,971 ns over repeat runs |
+
+The floor is the same on both: a fenced `RDTSC`/`RDTSCP` pair, and it is the limit of what
+this library resolves. The maximum differs: a million `std::sin` calls on the desktop
+caught stalls between 2.6 and 53 µs across runs, and the same million on an isolated core
+stayed under 1.8 µs. OS and CPU also differ and were not separated. A max in the tens of
+microseconds over a 20 ns floor is a stall the run caught, not the cost of the call; read
+p99.9 and max, and measure on an isolated core.
+
 ## Limitations
 
 - x86-64 only (uses `RDTSC`/`RDTSCP`); an ARM `cntvct_el0` backend would slot in
@@ -69,6 +91,9 @@ ctest --test-dir build --output-on-failure
 - Calibration is only as good as the reference clock and an invariant TSC; pin the
   thread and disable frequency scaling for stable absolute numbers.
 - Percentiles are bucketed (bounded relative error), not exact order statistics.
+- A 20 ns median floor means sub-100 ns work is measured with a coarse ruler. For
+  anything that small, time a batch of N iterations and divide, or accept that the
+  low percentiles are quantized to the floor.
 
 ## License
 
